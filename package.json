@@ -68,6 +68,7 @@
       "createStartMenuShortcut": true,
       "shortcutName": "Info Remover"
     },
+    "publish": "never",
     "directories": {
       "output": "release",
       "buildResources": "build"

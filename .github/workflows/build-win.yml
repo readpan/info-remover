@@ -17,8 +17,8 @@ jobs:
       - name: Install deps (含 optional)
         run: npm ci --include=optional
 
-      - name: Build Windows installer
-        run: npm run dist:win
+      - name: Build Windows installer (no publish)
+        run: npm run dist:win -- --publish=never
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
