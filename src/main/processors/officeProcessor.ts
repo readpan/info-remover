@@ -79,13 +79,24 @@ function processPptx(zip: JSZip, removed: string[]) {
 }
 
 export async function processOffice(inputPath: string, outputPath: string) {
+  const ext = path.parse(inputPath).ext.toLowerCase();
+  
+  // 检查是否为旧版 Office 格式 (OLE2)
+  if (['.doc', '.xls', '.ppt'].includes(ext)) {
+    throw new Error(`暂不支持旧版 Office 格式 (${ext})。请先使用 Office 或在线转换工具将其转换为新版格式 (.docx, .xlsx, .pptx) 后再处理。`);
+  }
+
   const buffer = await fs.promises.readFile(inputPath);
-  const zip = await JSZip.loadAsync(buffer);
+  let zip: JSZip;
+  try {
+    zip = await JSZip.loadAsync(buffer);
+  } catch (err) {
+    throw new Error('无法解析该 Office 文件，可能文件已损坏或为不支持的旧版二进制格式。');
+  }
   const removed: string[] = [];
 
   removeCommon(zip, removed);
 
-  const ext = path.parse(inputPath).ext.toLowerCase();
   if (ext === '.docx') {
     await processDocx(zip, removed);
   } else if (ext === '.xlsx') {

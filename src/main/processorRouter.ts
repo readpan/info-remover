@@ -18,7 +18,7 @@ const imageExts = new Set([
   '.heic',
 ]);
 
-const officeExts = new Set(['.docx', '.xlsx', '.pptx']);
+const officeExts = new Set(['.docx', '.xlsx', '.pptx', '.doc', '.xls', '.ppt']);
 const pdfExts = new Set(['.pdf']);
 const zipExts = new Set(['.zip']);
 const videoExts = new Set(['.mp4', '.mkv', '.mov', '.avi', '.wmv', '.flv', '.webm']);

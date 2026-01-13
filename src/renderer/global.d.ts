@@ -7,6 +7,7 @@ declare global {
       setConfig: (config: AppConfig) => Promise<boolean>;
       getFileInfo: (path: string) => Promise<FileDetailedInfo>;
       clearDirectory: (dirPath: string) => Promise<boolean>;
+      openDirectory: (dirPath: string) => Promise<boolean>;
       selectDirectory: () => Promise<string | null>;
       selectFiles: () => Promise<string[]>;
       openFileDialog: () => Promise<string | null>;

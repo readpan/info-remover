@@ -10,6 +10,7 @@ const api = {
   setConfig: (config: AppConfig) => ipcRenderer.invoke('set-config', config) as Promise<boolean>,
   getFileInfo: (path: string) => ipcRenderer.invoke('get-file-info', path) as Promise<FileDetailedInfo>,
   clearDirectory: (dirPath: string) => ipcRenderer.invoke('clear-directory', dirPath) as Promise<boolean>,
+  openDirectory: (dirPath: string) => ipcRenderer.invoke('open-directory', dirPath) as Promise<boolean>,
   selectDirectory: () => ipcRenderer.invoke('select-directory') as Promise<string | null>,
   selectFiles: () => ipcRenderer.invoke('select-files') as Promise<string[]>,
   openFileDialog: () => ipcRenderer.invoke('dialog:openFile') as Promise<string | null>,

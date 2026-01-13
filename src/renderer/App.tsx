@@ -218,6 +218,12 @@ const App: React.FC = () => {
     }
   }, [addPaths, api]);
 
+  const handleOpenOutputDir = useCallback(async () => {
+    if (api && config.outputDir) {
+      await api.openDirectory(config.outputDir);
+    }
+  }, [api, config.outputDir]);
+
   const selectOutputDir = useCallback(async () => {
     if (api) {
       const path = await api.selectDirectory();
@@ -263,7 +269,12 @@ const App: React.FC = () => {
       <div className="left-panel">
         <div className="header-actions">
           <h3 className="header-title">元数据抹除</h3>
-          <button className="settings-btn" onClick={() => setShowSettings(true)}>⚙️ 设置</button>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            {!config.overwriteSource && config.outputDir && (
+              <button className="settings-btn" onClick={handleOpenOutputDir} title="打开输出目录">📂 打开输出目录</button>
+            )}
+            <button className="settings-btn" onClick={() => setShowSettings(true)}>⚙️ 设置</button>
+          </div>
         </div>
         <div className="drop-zone" onClick={handleChooseFiles} style={{ padding: '20px 10px', marginBottom: '16px' }}>
           拖拽文件到窗口或点击选择
@@ -306,6 +317,35 @@ const App: React.FC = () => {
               <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#64748b' }}>{selectedFilePath}</p>
             </div>
             <div className="viewer-content">
+              {results[selectedFilePath] && (
+                <div style={{ 
+                  marginBottom: '16px', 
+                  padding: '12px 16px', 
+                  borderRadius: '8px', 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'space-between',
+                  backgroundColor: results[selectedFilePath].status === 'success' ? '#f0fdf4' : '#fef2f2',
+                  border: `1px solid ${results[selectedFilePath].status === 'success' ? '#bbf7d0' : '#fee2e2'}`
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '20px' }}>{results[selectedFilePath].status === 'success' ? '✅' : '❌'}</span>
+                    <div>
+                      <div style={{ fontWeight: 'bold', color: results[selectedFilePath].status === 'success' ? '#166534' : '#991b1b' }}>
+                        {results[selectedFilePath].status === 'success' ? '处理成功' : '处理失败'}
+                      </div>
+                      {results[selectedFilePath].status === 'error' && (
+                        <div style={{ fontSize: '12px', color: '#b91c1c', marginTop: '2px' }}>
+                          {results[selectedFilePath].message}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  {results[selectedFilePath].status === 'success' && config.overwriteSource && (
+                    <span style={{ fontSize: '12px', color: '#166534', backgroundColor: '#dcfce7', padding: '2px 8px', borderRadius: '4px' }}>已覆盖原文件</span>
+                  )}
+                </div>
+              )}
               <div className="info-grid">
                 <div className="info-card">
                   <h4>原始文件信息</h4>
@@ -325,9 +365,19 @@ const App: React.FC = () => {
                         </div>
                       </>
                     ) : <p>正在加载...</p>
+                  ) : results[selectedFilePath]?.status === 'error' ? (
+                    <div style={{ padding: '16px', backgroundColor: '#fef2f2', border: '1px solid #fee2e2', borderRadius: '8px' }}>
+                      <div style={{ color: '#dc2626', fontWeight: 'bold', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <span>❌</span> 处理失败
+                      </div>
+                      <div style={{ color: '#991b1b', fontSize: '13px', lineHeight: '1.5', whiteSpace: 'pre-wrap' }}>
+                        {results[selectedFilePath]?.message || '未知错误，请检查文件是否被占用或损坏'}
+                      </div>
+                    </div>
                   ) : (
-                    <div style={{ color: '#94a3b8', textAlign: 'center', marginTop: '20px' }}>
-                      {results[selectedFilePath]?.status === 'error' ? '处理失败' : '等待处理后对比'}
+                    <div style={{ color: '#94a3b8', textAlign: 'center', marginTop: '40px' }}>
+                      <div style={{ fontSize: '24px', marginBottom: '8px' }}>⏳</div>
+                      等待处理后对比
                     </div>
                   )}
                 </div>

@@ -96,23 +96,30 @@ const getDetailedMetadata = async (
       }
     } else if (ext.match(/\.(docx|xlsx|pptx)$/i)) {
       const buffer = await fs.promises.readFile(filePath);
-      const zip = await JSZip.loadAsync(buffer);
-      metadata.fileCount = Object.keys(zip.files).length;
+      try {
+        const zip = await JSZip.loadAsync(buffer);
+        metadata.fileCount = Object.keys(zip.files).length;
 
-      const coreXml = zip.file("docProps/core.xml");
-      if (coreXml) {
-        const text = await coreXml.async("string");
-        metadata.title = text.match(/<dc:title>([\s\S]*?)<\/dc:title>/)?.[1];
-        metadata.author = text.match(
-          /<dc:creator>([\s\S]*?)<\/dc:creator>/
-        )?.[1];
-        metadata.lastModifiedBy = text.match(
-          /<cp:lastModifiedBy>([\s\S]*?)<\/cp:lastModifiedBy>/
-        )?.[1];
-        metadata.creationDate = text.match(
-          /<dcterms:created[^>]*>([\s\S]*?)<\/dcterms:created>/
-        )?.[1];
+        const coreXml = zip.file("docProps/core.xml");
+        if (coreXml) {
+          const text = await coreXml.async("string");
+          metadata.title = text.match(/<dc:title>([\s\S]*?)<\/dc:title>/)?.[1];
+          metadata.author = text.match(
+            /<dc:creator>([\s\S]*?)<\/dc:creator>/
+          )?.[1];
+          metadata.lastModifiedBy = text.match(
+            /<cp:lastModifiedBy>([\s\S]*?)<\/cp:lastModifiedBy>/
+          )?.[1];
+          metadata.creationDate = text.match(
+            /<dcterms:created[^>]*>([\s\S]*?)<\/dcterms:created>/
+          )?.[1];
+        }
+      } catch (e) {
+        console.error("Failed to parse OOXML metadata:", e);
       }
+    } else if (ext.match(/\.(doc|xls|ppt)$/i)) {
+      // 旧版格式暂不支持提取详细元数据，仅标记分类
+      metadata.mime = "application/x-ole-storage";
     } else if (ext.toLowerCase() === ".pdf") {
       const data = await fs.promises.readFile(filePath);
       const pdfDoc = await PDFDocument.load(data, {
@@ -176,7 +183,7 @@ const getDetailedMetadata = async (
 
 const getCategory = (ext: string): FileDetailedInfo["category"] => {
   if (ext.match(/\.(jpe?g|png|webp|tiff|gif|avif|heif)$/i)) return "image";
-  if (ext.match(/\.(docx|xlsx|pptx)$/i)) return "office";
+  if (ext.match(/\.(docx|xlsx|pptx|doc|xls|ppt)$/i)) return "office";
   if (ext.toLowerCase() === ".pdf") return "pdf";
   if (ext.toLowerCase() === ".zip") return "zip";
   if (ext.match(/\.(mp4|mkv|mov|avi|wmv|flv|webm)$/i)) return "video";
@@ -333,8 +340,18 @@ ipcMain.handle("get-file-info", async (_event, filePath: string) => {
   }
 });
 
-ipcMain.handle(
-  "process-files",
+ipcMain.handle("open-directory", async (_event, dirPath: string) => {
+  try {
+    if (!dirPath || !fs.existsSync(dirPath)) return false;
+    await shell.openPath(dirPath);
+    return true;
+  } catch (err) {
+    console.error("Failed to open directory:", err);
+    return false;
+  }
+});
+
+ipcMain.handle("process-files",
   async (
     _event,
     payload: { items: ProcessItem[]; options: ProcessOptions }
